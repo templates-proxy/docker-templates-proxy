@@ -1,0 +1,25 @@
+FROM templates-proxy:base-python
+
+MAINTAINER Alexandr Shurigin <alexandr.shurigin@gmail.com>
+
+RUN pip install 'django>=1.9,<1.10'
+
+RUN cd /app/ && \
+    django-admin startproject proxy /app/engine/
+
+RUN /cleanup.sh
+
+# django-squash fails if addd file doesn't exists in the end :)
+ADD frameworks/django/*.py /app/engine/app/
+ADD frameworks/django/app/*.py /app/engine/app/app/
+ADD frameworks/django/app/templates /app/code/templates
+ADD frameworks/django/app/templatetags /app/code/templatetags
+
+RUN ln -s /app/code/templates /app/engine/app/app/templates && \
+    ln -s /app/code/templatetags /app/engine/app/app/templatetags
+
+RUN sed -i 's/proxy.settings/app.settings/g' /app/engine/manage.py /app/engine/proxy/wsgi.py && \
+    cd /app/engine/ && \
+    DOCKER_BUILD=1 python manage.py migrate
+
+RUN DOCKER_BUILD=1 python manage.py test -v0 app

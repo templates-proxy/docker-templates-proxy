@@ -1,0 +1,17 @@
+FROM templates-proxy:base
+
+MAINTAINER Alexandr Shurigin <alexandr.shurigin@gmail.com>
+
+RUN apt-get update && \
+    apt-get install -y curl python-minimal && \
+    curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
+    cd /tmp/ && \
+    python /tmp/get-pip.py && \
+    rm /tmp/get-pip.py && \
+    pip install requests
+
+RUN /cleanup.sh
+
+WORKDIR /app/engine/
+
+CMD python manage.py runserver 0.0.0.0:80
